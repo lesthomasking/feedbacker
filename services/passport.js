@@ -28,23 +28,17 @@ passport.use(
       callbackURL: "/auth/google/callback",
       proxy: true,
     },
-    (accessToken, refreshToken, profile, done) => {
-      //contains async functions that return a promise, so we must
-      //chain a .then to the functions
-      User.findOne({ googleId: profile.id }).then((existingUser) => {
-        //existingUser is what we name what was returned from findOne - model instance
-        if (existingUser) {
-          //we already have a record with the given profile id
-          //first argument is any error, the second is the user we found
-          done(null, existingUser);
-        } else {
-          //we don't have a user record with this ID, make a new record
-          new User({ googleId: profile.id })
-            .save()
-            //first argument is any error, second is the user we created
-            .then((user) => done(null, user));
-        }
-      });
+    async (accessToken, refreshToken, profile, done) => {
+      const existingUser = await User.findOne({ googleId: profile.id });
+      if (existingUser) {
+        //we already have a record with the given profile id
+        //first argument is any error, the second is the user we found
+        done(null, existingUser);
+      }
+
+      //we don't have a user record with this ID, make a new record
+      const user = await new User({ googleId: profile.id }).save();
+      done(null, user);
     }
   )
 );
